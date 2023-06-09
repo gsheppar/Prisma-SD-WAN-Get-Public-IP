@@ -23,7 +23,7 @@ TIME_BETWEEN_API_UPDATES = 60       # seconds
 REFRESH_LOGIN_TOKEN_INTERVAL = 7    # hours
 SDK_VERSION = cloudgenix.version
 SCRIPT_NAME = 'CloudGenix: Example SSH Script'
-SCRIPT_VERSION = "v1"
+SCRIPT_VERSION = "1"
 
 # Set NON-SYSLOG logging to use function name
 logger = logging.getLogger(__name__)
@@ -66,36 +66,45 @@ def get_ip(cgx):
                                     for tag in interface["tags"]:
                                         if tag == "dhcp_public":
                                             print("Checking interface " + interface["name"] + " on element " + element["name"] + " on site " + site["name"])
-                                            interface_name = interface["name"]
+                                            
+                                            for machine in cgx.get.machines().cgx_content["items"]:
+                                                if machine['em_element_id'] == element['id']:
+                                                    if machine["connected"]:
+                                                        interface_name = interface["name"]
                                         
-                                            net_connect = ConnectHandler(
-                                                device_type="generic",
-                                                host=host_ip,
-                                                username=CLOUDGENIX_USERNAME,
-                                                password=CLOUDGENIX_PASSWORD,
-                                            )
+                                                        net_connect = ConnectHandler(
+                                                            device_type="generic",
+                                                            host=host_ip,
+                                                            username=CLOUDGENIX_USERNAME,
+                                                            password=CLOUDGENIX_PASSWORD,
+                                                        )
     
-                                            command = "curl " + interface_name + " ifconfig.me"
+                                                        command = "curl " + interface_name + " ifconfig.me"
 
-                                            output = net_connect.send_command(
-                                                command
-                                            )
-                                            output_list = output.splitlines( )
-                                            found_ip = None
-                                            for ip_string in output_list:
-                                                try:
-                                                    ip_object = ipaddress.ip_address(ip_string)
-                                                    print(f"The IP address '{ip_object}' is valid.")
-                                                    found_ip = ip_object
-                                                except ValueError:
-                                                    pass
-                                            ip_data = {}
-                                            ip_data["site_name"] = site["name"]
-                                            ip_data["element_name"] = element["name"]   
-                                            ip_data["interface_name"] = interface_name
-                                            ip_data["interface_ip"] = str(found_ip)
-                                            ip_address_list.append(ip_data)
-            except:
+                                                        output = net_connect.send_command(
+                                                            command
+                                                        )
+                                                        output_list = output.splitlines( )
+                                                        found_ip = None
+                                                        for ip_string in output_list:
+                                                            try:
+                                                                ip_object = ipaddress.ip_address(ip_string)
+                                                                print(f"The IP address '{ip_object}' is valid.")
+                                                                found_ip = ip_object
+                                                            except ValueError:
+                                                                pass
+                                                        ip_data = {}
+                                                        ip_data["site_name"] = site["name"]
+                                                        ip_data["element_name"] = element["name"]   
+                                                        ip_data["interface_name"] = interface_name
+                                                        ip_data["interface_ip"] = str(found_ip)
+                                                        ip_address_list.append(ip_data)
+                                                        
+                                                    else:
+                                                        print(element["name"] + " is currently offline")
+
+                                        
+            except Exception as e:
                 print("Failed checking element " + element["name"] + " on site " + site["name"])                                                           
      
 
